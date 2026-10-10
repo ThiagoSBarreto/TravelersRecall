@@ -2,7 +2,10 @@
 ## Title: Traveler's Recall
 ## Notes: Fast travel system
 ## Author: NecroHome
-## Version: 1.0
+## Version: 1.0.0
 
 TravelersRecall.xml
 TravelersRecall.lua
+TravelersRecall_Core.lua
+TravelersRecall_UI.lua
+TravelersRecall_Events.lua
