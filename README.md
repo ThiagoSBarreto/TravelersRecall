@@ -2,12 +2,9 @@
 
 Progressive fast-travel system for AzerothCore.
 
-[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-support-ff69b4?logo=github)](https://github.com/sponsors/ThiagoSBarreto)
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?logo=buymeacoffee&logoColor=black&style=flat)](https://buymeacoffee.com/thiagosbarreto)
-
 ---
 
-Client-side addon for the [Traveler's Recall Module](https://github.com/NecroHome/mod-travelers-recall), providing the user interface for browsing and using unlocked teleport locations.
+Client-side addon for the [Traveler's Recall Module](https://github.com/EvilTactician/mod-travelers-recall), providing the user interface for browsing and using unlocked teleport locations.
 
 ---
 
@@ -40,15 +37,17 @@ Players can browse their unlocked locations, search for destinations, and initia
 
 This addon requires the server-side module:
 
-[**Traveler's Recall — AzerothCore Module**](https://github.com/NecroHome/mod-travelers-recall)
+[**Traveler's Recall — AzerothCore Module**](https://github.com/EvilTactician/mod-travelers-recall)
 
 The addon does not provide teleport functionality by itself. It communicates with the server-side module to retrieve unlocked locations and execute teleport requests.
 
 ---
 
 ## Installation
+Git clone or [download from GitHub](https://github.com/EvilTactician/TravelersRecall/archive/refs/heads/main.zip)
 
 Copy the `TravelersRecall` folder into your World of Warcraft AddOns directory.
+If downloaded from github, it will likely be called TravelersRecall-main, rename it to TravelersRecall.
 
 Expected structure:
 
@@ -60,14 +59,18 @@ World of Warcraft/
 After installation, ensure the addon is enabled on the character-selection screen.
 
 ---
-
 ## Usage
 
-Open the teleport window using:
-
-`/tr`
-
+Open the teleport window using: `/tr`
 Alternatively, click the Traveler's Recall button on the minimap.
+A handy macro in-game for your hotbar:
+```
+#showtooltip Hearthstone
+/use [nobutton:2] Hearthstone
+/stopmacro [nobutton:2]
+/tr
+```
+Left-click uses your hearthstone, right-click opens Traveler's Recall.
 
 The window displays the teleport locations unlocked by your character. Click any available location to teleport there.
 
@@ -76,35 +79,21 @@ Locations on cooldown are greyed out and show the time remaining. The cooldowns 
 Use the search bar at the top of the window to filter by name or region, the sort button to switch between region groups and an A - Z list, and right-click any location to add it to your favourites. Favourites, collapsed groups and filter settings are saved per character.
 
 ---
-
 ## Images
 
 <img width="382" height="646" alt="image" src="https://github.com/user-attachments/assets/606e409e-e99a-411f-814f-87e14b324be0" />
 <img width="388" height="647" alt="image" src="https://github.com/user-attachments/assets/07f8ad7c-f936-43d4-a463-8b1322fc0deb" />
 
 ---
-
 ## Author
-
-**ThiagoSBarreto**  
+1.1: EvilTactician
+1.0: **ThiagoSBarreto**  
 LesmaSamuray
 
 ---
-
 ## Update
 
-* Go to the World of Warcraft folder
-   ```text
-   cd /path/to/world_of_warcraft/Interface/Addons/TravelersRecall
-   ```
-* Update the addon
-   ```text
-   git pull
-   ```
-* Restart the WoW Client or
-   ```text
-   /reload
-   ```
+Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-install as per installation instructions.
 
 ---
 
