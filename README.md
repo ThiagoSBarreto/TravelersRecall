@@ -25,8 +25,14 @@ Players can browse their unlocked locations, search for destinations, and initia
 - Open the teleport window by clicking the minimap button
 - Display all unlocked teleport locations
 - Click a location to initiate a teleport
-- Display the remaining cooldown time when a teleport is unavailable
-- Search and filter locations using the search bar at the bottom of the window
+- Locations grouped by region (Capital Cities, Eastern Kingdoms, Kalimdor, Outland, Northrend, Other) with collapsible headers, or shown as a plain A - Z list
+- Capital cities highlighted in gold
+- Favourites: right-click a location to pin it to the top of the list
+- Cooldowns shown next to each location and counted down live; locations on cooldown are greyed out
+- Teleport to Friend is greyed out when you are not in a party, and hints when no party member is targeted
+- "Hide unavailable" filter
+- Search by location name or region using the search bar at the top of the window
+- Optional DragonUI skin: when DragonUI is loaded the window uses its frame style automatically
 
 ---
 
@@ -65,9 +71,9 @@ Alternatively, click the Traveler's Recall button on the minimap.
 
 The window displays the teleport locations unlocked by your character. Click any available location to teleport there.
 
-If the selected location is currently on cooldown, the addon displays a message indicating the remaining cooldown time.
+Locations on cooldown are greyed out and show the time remaining. The cooldowns are read from the server's `.tr cd all` command when the window opens and after each teleport, so no server changes are needed. Because that command reports the cooldowns of your selected player, the lookup waits until you are not targeting another player.
 
-Use the search bar at the bottom of the window to filter the list and quickly find a specific location.
+Use the search bar at the top of the window to filter by name or region, the sort button to switch between region groups and an A - Z list, and right-click any location to add it to your favourites. Favourites, collapsed groups and filter settings are saved per character.
 
 ---
 
@@ -103,6 +109,14 @@ LesmaSamuray
 ---
 
 ## Changelog
+
+### November 4, 2026 — Version 1.1.0
+
+- Location list grouped by region with collapsible headers, A - Z sort option and favourites
+- Cooldowns and Teleport to Friend availability shown in the list
+- "Hide unavailable" filter, search by region, search bar moved to the top
+- Optional DragonUI skin
+- Simpler minimap icon
 
 ### September 16, 2026 — Version 1.0.0
 
