@@ -81,14 +81,14 @@ Use the search bar at the top of the window to filter by name or region, the sor
 ---
 ## Images
 
-<img width="504" height="869" alt="image" src="https://github.com/user-attachments/assets/08c68f98-80b7-4360-9f38-a936e4f60326" />
-<img width="506" height="866" alt="image" src="https://github.com/user-attachments/assets/819b89fd-5ab5-4777-9ce1-fa57c4cb5042" />
-<img width="504" height="870" alt="image" src="https://github.com/user-attachments/assets/855c04bd-0f93-4b1a-81f1-de1d8c67e403" />
-<img width="508" height="869" alt="image" src="https://github.com/user-attachments/assets/86e348e4-43a4-46f8-a61b-bd9d9b786f15" />
+<img width="49%" alt="image" src="https://github.com/user-attachments/assets/08c68f98-80b7-4360-9f38-a936e4f60326" />
+<img width="49%" alt="image" src="https://github.com/user-attachments/assets/819b89fd-5ab5-4777-9ce1-fa57c4cb5042" />
+<img width="49%" alt="image" src="https://github.com/user-attachments/assets/855c04bd-0f93-4b1a-81f1-de1d8c67e403" />
+<img width="49%" alt="image" src="https://github.com/user-attachments/assets/86e348e4-43a4-46f8-a61b-bd9d9b786f15" />
 
 ---
 ## Author
-1.1: EvilTactician
+1.1: EvilTactician  
 1.0: **ThiagoSBarreto**  
 LesmaSamuray
 
