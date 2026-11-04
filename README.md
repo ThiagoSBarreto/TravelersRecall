@@ -81,8 +81,10 @@ Use the search bar at the top of the window to filter by name or region, the sor
 ---
 ## Images
 
-<img width="382" height="646" alt="image" src="https://github.com/user-attachments/assets/606e409e-e99a-411f-814f-87e14b324be0" />
-<img width="388" height="647" alt="image" src="https://github.com/user-attachments/assets/07f8ad7c-f936-43d4-a463-8b1322fc0deb" />
+<img width="504" height="869" alt="image" src="https://github.com/user-attachments/assets/08c68f98-80b7-4360-9f38-a936e4f60326" />
+<img width="506" height="866" alt="image" src="https://github.com/user-attachments/assets/819b89fd-5ab5-4777-9ce1-fa57c4cb5042" />
+<img width="504" height="870" alt="image" src="https://github.com/user-attachments/assets/855c04bd-0f93-4b1a-81f1-de1d8c67e403" />
+<img width="508" height="869" alt="image" src="https://github.com/user-attachments/assets/86e348e4-43a4-46f8-a61b-bd9d9b786f15" />
 
 ---
 ## Author
