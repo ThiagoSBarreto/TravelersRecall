@@ -36,10 +36,20 @@ local LOCATIONS = {
     -- Eastern Kingdoms
     ["booty bay"] = { region = REGION_EASTERN_KINGDOMS },
     ["brill"] = { region = REGION_EASTERN_KINGDOMS },
+    ["darkshire"] = { region = REGION_EASTERN_KINGDOMS },
     ["goldshire"] = { region = REGION_EASTERN_KINGDOMS },
     ["kharanos"] = { region = REGION_EASTERN_KINGDOMS },
+    ["lakeshire"] = { region = REGION_EASTERN_KINGDOMS },
+    ["menethil harbor"] = { region = REGION_EASTERN_KINGDOMS },
+    ["morgan's vigil"] = { region = REGION_EASTERN_KINGDOMS },
+    ["nethergarde keep"] = { region = REGION_EASTERN_KINGDOMS },
+    ["refuge pointe"] = { region = REGION_EASTERN_KINGDOMS },
+    ["sentinel hill"] = { region = REGION_EASTERN_KINGDOMS },
+    ["southshore"] = { region = REGION_EASTERN_KINGDOMS },
+    ["tarren mill"] = { region = REGION_EASTERN_KINGDOMS },
     ["the sepulcher"] = { region = REGION_EASTERN_KINGDOMS },
     ["thelsamar"] = { region = REGION_EASTERN_KINGDOMS },
+    ["thorium point"] = { region = REGION_EASTERN_KINGDOMS },
 
     -- Kalimdor
     ["astranaar"] = { region = REGION_KALIMDOR },
