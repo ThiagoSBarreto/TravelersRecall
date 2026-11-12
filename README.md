@@ -101,6 +101,11 @@ Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-insta
 
 ## Changelog
 
+### November 12, 2026 — Version 1.1.1
+
+- Added Tarren Mill (Horde, Hillsbrad Foothills). Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the location to the database
+- Fixed Sentinel Hill, Darkshire, Lakeshire, Morgan's Vigil, Thorium Point, Nethergarde Keep, Menethil Harbor, Refuge Pointe and Southshore showing under "Other" instead of Eastern Kingdoms
+
 ### November 4, 2026 — Version 1.1.0
 
 - Location list grouped by region with collapsible headers, A - Z sort option and favourites
