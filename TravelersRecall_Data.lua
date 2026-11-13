@@ -78,6 +78,8 @@ local LOCATIONS = {
     ["razor hill"] = { region = REGION_KALIMDOR },
     ["splintertree post"] = { region = REGION_KALIMDOR },
     ["starfall village"] = { region = REGION_KALIMDOR },
+    ["stonetalon peak"] = { region = REGION_KALIMDOR },
+    ["sun rock retreat"] = { region = REGION_KALIMDOR },
     ["valormok"] = { region = REGION_KALIMDOR },
     ["zoram'gar outpost"] = { region = REGION_KALIMDOR },
 

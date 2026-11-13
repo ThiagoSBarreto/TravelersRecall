@@ -2,7 +2,7 @@
 ## Title: Traveler's Recall
 ## Notes: Fast travel system
 ## Author: NecroHome
-## Version: 1.1.1
+## Version: 1.1.2
 ## OptionalDeps: DragonUI
 ## SavedVariablesPerCharacter: TravelersRecallDB
 

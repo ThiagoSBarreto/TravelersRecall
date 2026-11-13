@@ -101,6 +101,10 @@ Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-insta
 
 ## Changelog
 
+### November 13, 2026 — Version 1.1.2
+
+- Added Sun Rock Retreat (Horde) and Stonetalon Peak (Alliance) in Stonetalon Mountains. Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the locations to the database
+
 ### November 12, 2026 — Version 1.1.1
 
 - Added Tarren Mill (Horde, Hillsbrad Foothills). Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the location to the database
