@@ -101,6 +101,10 @@ Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-insta
 
 ## Changelog
 
+### November 14, 2026 — Version 1.1.3
+
+- Added Shadowprey Village (Horde) and Nijel's Point (Alliance) in Desolace. Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the locations to the database
+
 ### November 13, 2026 — Version 1.1.2
 
 - Added Sun Rock Retreat (Horde) and Stonetalon Peak (Alliance) in Stonetalon Mountains. Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the locations to the database
