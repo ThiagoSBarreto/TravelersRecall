@@ -3,6 +3,83 @@ TravelersRecall.unlocked = TravelersRecall.unlocked or {}
 TravelersRecall.searchText = TravelersRecall.searchText or ""
 -- Per-location grouping info sent by the server (TR_META): { continent = n, zone = "..." }
 TravelersRecall.meta = TravelersRecall.meta or {}
+-- Cooldown expiry per location id, in GetTime() seconds (TR_CD).
+TravelersRecall.cooldowns = TravelersRecall.cooldowns or {}
+
+-- Per-character saved settings. Saved variables are loaded after the addon's
+-- files run, so always go through this accessor instead of caching the table.
+local function GetDB()
+    TravelersRecallDB = TravelersRecallDB or {}
+    TravelersRecallDB.favorites = TravelersRecallDB.favorites or {}
+    TravelersRecallDB.collapsed = TravelersRecallDB.collapsed or {}
+    return TravelersRecallDB
+end
+
+local function IsFavorite(id)
+    return GetDB().favorites[tonumber(id)] == true
+end
+
+local function ToggleFavorite(id)
+    local favorites = GetDB().favorites
+    id = tonumber(id)
+    if favorites[id] then
+        favorites[id] = nil
+    else
+        favorites[id] = true
+    end
+end
+
+local function IsCollapsed(group)
+    return GetDB().collapsed[group] == true
+end
+
+local function ToggleCollapsed(group)
+    local collapsed = GetDB().collapsed
+    collapsed[group] = not collapsed[group] or nil
+end
+
+local function GetCooldownRemaining(id)
+    local expires = TravelersRecall.cooldowns[tonumber(id)]
+    if not expires then
+        return 0
+    end
+
+    local remaining = expires - GetTime()
+    if remaining <= 0 then
+        TravelersRecall.cooldowns[tonumber(id)] = nil
+        return 0
+    end
+
+    return remaining
+end
+
+local function StoreCooldown(id, seconds)
+    id = tonumber(id)
+    seconds = tonumber(seconds) or 0
+
+    if id == 0 then
+        -- "all locations" (GM reset all)
+        TravelersRecall.cooldowns = {}
+    elseif seconds > 0 then
+        TravelersRecall.cooldowns[id] = GetTime() + seconds
+    else
+        TravelersRecall.cooldowns[id] = nil
+    end
+
+    if TravelersRecall.UI and TravelersRecall.UI.RefreshLocations then
+        TravelersRecall.UI.RefreshLocations()
+    end
+end
+
+local function FormatCooldown(seconds)
+    seconds = math.ceil(seconds)
+    if seconds >= 3600 then
+        return string.format("%dh %dm", math.floor(seconds / 3600), math.floor((seconds % 3600) / 60))
+    elseif seconds >= 60 then
+        return string.format("%dm", math.ceil(seconds / 60))
+    end
+    return string.format("%ds", seconds)
+end
 
 local function NormalizeLocationData(rest)
     if not rest then
@@ -87,6 +164,13 @@ end
 TravelersRecall.Core = {
     MatchesSearch = MatchesSearch,
     StoreMeta = StoreMeta,
+    StoreCooldown = StoreCooldown,
+    GetCooldownRemaining = GetCooldownRemaining,
+    FormatCooldown = FormatCooldown,
+    IsFavorite = IsFavorite,
+    ToggleFavorite = ToggleFavorite,
+    IsCollapsed = IsCollapsed,
+    ToggleCollapsed = ToggleCollapsed,
     NormalizeLocationData = NormalizeLocationData,
     StoreLocation = StoreLocation,
     RemoveLocation = RemoveLocation,

@@ -14,6 +14,14 @@ local function HandleChatMessage(event, message)
         return
     end
 
+    if string.find(message, "TR_CD:") then
+        local _, _, id, seconds = string.find(message, "TR_CD:(%d+):(%d+)")
+        if id and TravelersRecall.Core and TravelersRecall.Core.StoreCooldown then
+            TravelersRecall.Core.StoreCooldown(id, seconds)
+        end
+        return
+    end
+
     if string.find(message, "TR_LIST:") then
         local _, _, id, rest = string.find(message, "TR_LIST:(%d+):(.*)")
         if TravelersRecall.Core and TravelersRecall.Core.StoreLocation then
