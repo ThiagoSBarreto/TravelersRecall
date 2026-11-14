@@ -2,6 +2,19 @@ TravelersRecall = TravelersRecall or {}
 TravelersRecall.UI = TravelersRecall.UI or {}
 TravelersRecall.searchText = TravelersRecall.searchText or ""
 
+local FRIEND_NAME = "Teleport to Friend"
+local OTHER_CONTINENT = 9
+local CONTINENT_NAMES = {
+    [1] = "Eastern Kingdoms",
+    [2] = "Kalimdor",
+    [3] = "Outland",
+    [4] = "Northrend",
+    [9] = "Other",
+}
+local ROW_HEIGHT = 26
+local HEADER_HEIGHT = 18
+local HEADER_GAP = 6
+
 local function SendEditBoxCommand(command)
     local editBox = ChatEdit_ChooseBoxForSend()
     if not editBox then
@@ -91,21 +104,79 @@ local function RefreshLocations()
         button:Hide()
     end
 
+    local headers = TravelersRecall.UI.headers or {}
+    TravelersRecall.UI.headers = headers
+
+    for _, header in ipairs(headers) do
+        header:Hide()
+    end
+
+    local allMeta = TravelersRecall.meta or {}
     local locations = {}
     for id, data in pairs(TravelersRecall.unlocked) do
-        if TravelersRecall.Core and TravelersRecall.Core.MatchesSearch(data and data.name) then
-            table.insert(locations, { id = id, data = data })
+        local meta = allMeta[id]
+        local zone = meta and meta.zone or nil
+        if TravelersRecall.Core and TravelersRecall.Core.MatchesSearch(data and data.name, zone) then
+            local isFriend = data.name == FRIEND_NAME
+            table.insert(locations, {
+                id = id,
+                data = data,
+                zone = zone or "",
+                isFriend = isFriend,
+                continent = isFriend and 0 or (meta and meta.continent) or OTHER_CONTINENT,
+                sortName = string.lower(data.name or ""),
+            })
         end
     end
 
+    -- Teleport to Friend first, then continent, zone and name.
+    -- Every key is compared in full, so the comparator is a strict ordering.
     table.sort(locations, function(left, right)
-        return left.data.name == "Teleport to Friend" and right.data.name ~= "Teleport to Friend"
+        if left.continent ~= right.continent then
+            return left.continent < right.continent
+        end
+        if left.zone ~= right.zone then
+            return left.zone < right.zone
+        end
+        if left.sortName ~= right.sortName then
+            return left.sortName < right.sortName
+        end
+        return left.id < right.id
     end)
 
+    -- Only show headers when the server sends grouping info (newer module versions).
+    local showHeaders = next(allMeta) ~= nil
+
+    local offset = 0
     local visibleIndex = 0
+    local headerIndex = 0
+    local currentContinent = nil
     for _, location in ipairs(locations) do
         local id = location.id
         local data = location.data
+
+        if showHeaders and not location.isFriend and location.continent ~= currentContinent then
+            currentContinent = location.continent
+            headerIndex = headerIndex + 1
+
+            local header = headers[headerIndex]
+            if not header then
+                header = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                header:SetJustifyH("LEFT")
+                headers[headerIndex] = header
+            end
+
+            if offset > 0 then
+                offset = offset + HEADER_GAP
+            end
+
+            header:ClearAllPoints()
+            header:SetPoint("TOPLEFT", content, "TOPLEFT", 6, -offset)
+            header:SetText(CONTINENT_NAMES[currentContinent] or CONTINENT_NAMES[OTHER_CONTINENT])
+            header:Show()
+            offset = offset + HEADER_HEIGHT
+        end
+
         visibleIndex = visibleIndex + 1
 
         local button = buttons[visibleIndex]
@@ -122,18 +193,34 @@ local function RefreshLocations()
             buttons[visibleIndex] = button
         end
 
-        button:SetPoint("TOPLEFT", content, "TOPLEFT", 30, -((visibleIndex - 1) * 26))
+        button:ClearAllPoints()
+        button:SetPoint("TOPLEFT", content, "TOPLEFT", 30, -offset)
         button:SetText(data.name)
         button.icon:SetTexture(data.icon)
         button:SetScript("OnClick", function()
             SendEditBoxCommand(".tr teleport " .. id)
         end)
+
+        local zone = location.zone
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(data.name)
+            if zone ~= "" then
+                GameTooltip:AddLine(zone, 0.8, 0.8, 0.8)
+            end
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+
         button:Show()
+        offset = offset + ROW_HEIGHT
     end
 
-    content:SetHeight(visibleIndex * 26)
+    content:SetHeight(math.max(offset, 1))
 
-    local maxScroll = math.max(0, (visibleIndex * 26) - 370)
+    local maxScroll = math.max(0, offset - 370)
     TravelersRecallScrollBar:SetMinMaxValues(0, maxScroll)
 end
 

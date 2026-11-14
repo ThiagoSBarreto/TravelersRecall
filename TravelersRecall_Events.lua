@@ -6,6 +6,14 @@ local function HandleChatMessage(event, message)
         return
     end
 
+    if string.find(message, "TR_META:") then
+        local _, _, id, continent, zone = string.find(message, "TR_META:(%d+):(%d+):(.*)")
+        if id and TravelersRecall.Core and TravelersRecall.Core.StoreMeta then
+            TravelersRecall.Core.StoreMeta(id, continent, zone)
+        end
+        return
+    end
+
     if string.find(message, "TR_LIST:") then
         local _, _, id, rest = string.find(message, "TR_LIST:(%d+):(.*)")
         if TravelersRecall.Core and TravelersRecall.Core.StoreLocation then
