@@ -78,7 +78,7 @@ local function CreateMinimapButton()
 
     minimapButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("Traveler's Recall 1.0.0")
+        GameTooltip:AddLine("Traveler's Recall 1.1.0 (sorted)")
         GameTooltip:AddLine(" ")
         -- GameTooltip:AddLine(" ", 1, 1, 1)
         GameTooltip:Show()
