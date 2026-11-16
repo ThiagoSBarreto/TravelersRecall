@@ -31,13 +31,14 @@ Players can browse their unlocked locations, search for destinations, and initia
 - Open the teleport window by clicking the minimap button
 - Display all unlocked teleport locations
 - Click a location to initiate a teleport
-- Locations grouped by region (Capital Cities, Eastern Kingdoms, Kalimdor, Outland, Northrend, Other) with collapsible headers, or shown as a plain A - Z list
+- Locations grouped by region (Capital Cities, Eastern Kingdoms, Kalimdor, Outland, Northrend, Other) or by zone with collapsible headers, or shown as a plain A - Z list
+- Location tooltips show the zone and region, with capital cities marked in the zone line
 - Capital cities highlighted in gold
 - Favourites: right-click a location to pin it to the top of the list
 - Cooldowns shown next to each location and counted down live; locations on cooldown are greyed out
 - Teleport to Friend is greyed out when you are not in a party, and hints when no party member is targeted
 - "Hide unavailable" filter
-- Search by location name or region using the search bar at the top of the window
+- Search by location name, zone or region using the search bar at the top of the window
 - Optional DragonUI skin: when DragonUI is loaded the window uses its frame style automatically
 
 ---
@@ -85,7 +86,7 @@ The window displays the teleport locations unlocked by your character. Click any
 
 Locations on cooldown are greyed out and show the time remaining. The cooldowns are read from the server's `.tr cd all` command when the window opens and after each teleport, so no server changes are needed. Because that command reports the cooldowns of your selected player, the lookup waits until you are not targeting another player.
 
-Use the search bar at the top of the window to filter by name or region, the sort button to switch between region groups and an A - Z list, and right-click any location to add it to your favourites. Favourites, collapsed groups and filter settings are saved per character.
+Use the search bar at the top of the window to filter by name, zone or region, the sort button to switch between region groups, zone groups and an A - Z list, and right-click any location to add it to your favourites. Favourites, collapsed groups and filter settings are saved per character.
 
 ---
 ## Images
@@ -109,6 +110,12 @@ Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-insta
 ---
 
 ## Changelog
+
+### November 16, 2026 — Version 1.2.0
+
+- Location tooltips show the zone on its own line above the region, e.g. Crossroads, The Barrens, Kalimdor. Capital cities show "Capital City" after the zone, e.g. Orgrimmar, Durotar - Capital City, Kalimdor
+- New "By Zone" sort option, which groups locations under their zone. The sort button now cycles By Region, By Zone and A - Z
+- Search also matches the zone name
 
 ### November 14, 2026 — Version 1.1.3
 
