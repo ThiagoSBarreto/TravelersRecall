@@ -161,9 +161,13 @@ local function ShowRowTooltip(row)
 
     if isFriend then
         GameTooltip:AddLine("Teleports you to your targeted party member.", 0.7, 0.7, 0.7, true)
-    elseif location.info.capital then
-        GameTooltip:AddLine(location.info.region .. " - Capital city", 0.7, 0.7, 0.7)
     else
+        local zone = location.info.zone
+        if zone and location.info.capital then
+            GameTooltip:AddLine(zone .. " - Capital City", 0.7, 0.7, 0.7)
+        elseif zone and string.lower(string.gsub(zone, "'", "")) ~= string.lower(string.gsub(location.data.name, "'", "")) then
+            GameTooltip:AddLine(zone, 0.7, 0.7, 0.7)
+        end
         GameTooltip:AddLine(location.info.region, 0.7, 0.7, 0.7)
     end
 
@@ -308,6 +312,9 @@ local function BuildEntries()
         if info.capital then
             searchRegion = data.REGION_CAPITALS .. " " .. info.region
         end
+        if info.zone then
+            searchRegion = info.zone .. " " .. searchRegion
+        end
 
         if core.MatchesSearch(locationData.name, searchRegion)
             and (not db.readyOnly or core.GetAvailability(id, locationData)) then
@@ -319,6 +326,9 @@ local function BuildEntries()
                 table.insert(favouriteLocations, location)
             else
                 local group = info.capital and data.REGION_CAPITALS or info.region
+                if db.sortMode == "zone" then
+                    group = info.zone or data.REGION_OTHER
+                end
                 groups[group] = groups[group] or {}
                 table.insert(groups[group], location)
                 table.insert(otherLocations, location)
@@ -365,6 +375,22 @@ local function BuildEntries()
     end
 
     AddGroup(GROUP_FAVOURITES, favouriteLocations)
+
+    if db.sortMode == "zone" then
+        local zones = {}
+        for group in pairs(groups) do
+            if group ~= data.REGION_OTHER then
+                table.insert(zones, group)
+            end
+        end
+        table.sort(zones)
+        for _, group in ipairs(zones) do
+            AddGroup(group, groups[group])
+        end
+        AddGroup(data.REGION_OTHER, groups[data.REGION_OTHER])
+        return entries, total, onCooldown
+    end
+
     for _, group in ipairs(data.REGION_ORDER) do
         AddGroup(group, groups[group])
     end
@@ -541,6 +567,8 @@ local function UpdateSortButton()
 
     if GetDB().sortMode == "name" then
         TravelersRecallSortButton:SetText("A - Z")
+    elseif GetDB().sortMode == "zone" then
+        TravelersRecallSortButton:SetText("By Zone")
     else
         TravelersRecallSortButton:SetText("By Region")
     end
@@ -553,7 +581,7 @@ local function SetupSearchBox()
 
     local placeholder = TravelersRecallSearchBox:CreateFontString(nil, "OVERLAY", "GameFontDisable")
     placeholder:SetPoint("LEFT", TravelersRecallSearchBox, "LEFT", 1, 0)
-    placeholder:SetText("Search name or region")
+    placeholder:SetText("Search name or zone")
     TravelersRecallSearchBox.placeholder = placeholder
 
     local function UpdatePlaceholder(self)
@@ -585,10 +613,12 @@ local function SetupFilters()
     if TravelersRecallSortButton then
         TravelersRecallSortButton:SetScript("OnClick", function()
             local db = GetDB()
-            if db.sortMode == "name" then
-                db.sortMode = "region"
-            else
+            if db.sortMode == "region" then
+                db.sortMode = "zone"
+            elseif db.sortMode == "zone" then
                 db.sortMode = "name"
+            else
+                db.sortMode = "region"
             end
             UpdateSortButton()
             TravelersRecallScrollBar:SetValue(0)
@@ -597,7 +627,7 @@ local function SetupFilters()
         TravelersRecallSortButton:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:AddLine("Sort order")
-            GameTooltip:AddLine("Switch between grouping by region and a plain A - Z list.", 0.7, 0.7, 0.7, true)
+            GameTooltip:AddLine("Switch between grouping by region, grouping by zone and a plain A - Z list.", 0.7, 0.7, 0.7, true)
             GameTooltip:Show()
         end)
         TravelersRecallSortButton:SetScript("OnLeave", function()
