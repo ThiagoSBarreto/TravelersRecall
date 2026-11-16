@@ -1,6 +1,15 @@
 # Traveler's Recall — Client Addon
 
-Progressive fast-travel system for AzerothCore.
+<div align="center">
+
+![Interface Version](https://img.shields.io/badge/Interface-30300-blue)
+![WoW Version](https://img.shields.io/badge/WoW-3.3.5a-orange)
+[![Version](https://img.shields.io/badge/Version-1.1.3-green)](https://github.com/EvilTactician/TravelersRecall)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
+**Progressive fast-travel system for AzerothCore.**
+
+</div>
 
 ---
 
