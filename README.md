@@ -104,6 +104,15 @@ LesmaSamuray
 
 ## Changelog
 
+### November 16, 2026 — Version 1.2.0
+
+- List sorted by continent, zone and name, with continent headers
+- Click a header to collapse it (remembered per character)
+- Shift-click a location to pin it under Favourites (remembered per character)
+- Remaining cooldown shown on each button
+- Search also matches zone names
+- Needs mod-travelers-recall 1.2.0 on the server for headers and cooldowns; with an older server the list is sorted alphabetically
+
 ### September 16, 2026 — Version 1.0.0
 
 - Code refactor
