@@ -60,7 +60,7 @@ local LOCATIONS = {
     ["southshore"] = { zone = "Hillsbrad Foothills", region = REGION_EASTERN_KINGDOMS },
     ["stonard"] = { zone = "Swamp of Sorrows", region = REGION_EASTERN_KINGDOMS },
     ["tarren mill"] = { zone = "Hillsbrad Foothills", region = REGION_EASTERN_KINGDOMS },
-    ["the bulwark"] = { zone = "Western Plaguelands", region = REGION_EASTERN_KINGDOMS },
+    ["the bulwark"] = { zone = "Tirisfal Glades", region = REGION_EASTERN_KINGDOMS },
     ["the sepulcher"] = { zone = "Silverpine Forest", region = REGION_EASTERN_KINGDOMS },
     ["thelsamar"] = { zone = "Loch Modan", region = REGION_EASTERN_KINGDOMS },
     ["thondroril river"] = { zone = "Eastern Plaguelands", region = REGION_EASTERN_KINGDOMS },
