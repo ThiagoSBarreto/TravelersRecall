@@ -47,14 +47,14 @@ Players can browse their unlocked locations, search for destinations, and initia
 
 This addon requires the server-side module:
 
-[**Traveler's Recall — AzerothCore Module**](https://github.com/EvilTactician/mod-travelers-recall)
+[**Traveler's Recall — AzerothCore Module**](https://github.com/ThiagoSBarreto/mod-travelers-recall)
 
 The addon does not provide teleport functionality by itself. It communicates with the server-side module to retrieve unlocked locations and execute teleport requests.
 
 ---
 
 ## Installation
-Git clone or [download from GitHub](https://github.com/EvilTactician/TravelersRecall/archive/refs/heads/main.zip)
+Git clone or [download from GitHub](https://github.com/ThiagoSBarreto/TravelersRecall/archive/refs/heads/main.zip)
 
 Copy the `TravelersRecall` folder into your World of Warcraft AddOns directory.
 If downloaded from github, it will likely be called TravelersRecall-main, rename it to TravelersRecall.
@@ -113,7 +113,7 @@ Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-insta
 
 ### November 19, 2026 — Version 1.3.1
 
-- Zone and region grouping for the 63 new locations in version 1.4.1 of the [server module](https://github.com/EvilTactician/mod-travelers-recall), such as Hammerfall, Theramore Isle, The Argent Vanguard and all of Horde Northrend. The locations themselves need the updated server module
+- Zone and region grouping for the 63 new locations in version 1.4.1 of the [server module](https://github.com/ThiagoSBarreto/mod-travelers-recall), such as Hammerfall, Theramore Isle, The Argent Vanguard and all of Horde Northrend. The locations themselves need the updated server module
 
 ### November 16, 2026 — Version 1.2.0
 
@@ -123,15 +123,15 @@ Delete the TravelersRecall folder from /WoW Client/Interface/Addons and re-insta
 
 ### November 14, 2026 — Version 1.1.3
 
-- Added Shadowprey Village (Horde) and Nijel's Point (Alliance) in Desolace. Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the locations to the database
+- Added Shadowprey Village (Horde) and Nijel's Point (Alliance) in Desolace. Requires the latest version of the [server module](https://github.com/ThiagoSBarreto/mod-travelers-recall), which adds the locations to the database
 
 ### November 13, 2026 — Version 1.1.2
 
-- Added Sun Rock Retreat (Horde) and Stonetalon Peak (Alliance) in Stonetalon Mountains. Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the locations to the database
+- Added Sun Rock Retreat (Horde) and Stonetalon Peak (Alliance) in Stonetalon Mountains. Requires the latest version of the [server module](https://github.com/ThiagoSBarreto/mod-travelers-recall), which adds the locations to the database
 
 ### November 12, 2026 — Version 1.1.1
 
-- Added Tarren Mill (Horde, Hillsbrad Foothills). Requires the latest version of the [server module](https://github.com/EvilTactician/mod-travelers-recall), which adds the location to the database
+- Added Tarren Mill (Horde, Hillsbrad Foothills). Requires the latest version of the [server module](https://github.com/ThiagoSBarreto/mod-travelers-recall), which adds the location to the database
 - Fixed Sentinel Hill, Darkshire, Lakeshire, Morgan's Vigil, Thorium Point, Nethergarde Keep, Menethil Harbor, Refuge Pointe and Southshore showing under "Other" instead of Eastern Kingdoms
 
 ### November 4, 2026 — Version 1.1.0
