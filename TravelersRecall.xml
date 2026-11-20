@@ -4,10 +4,11 @@
            hidden="true"
            movable="true"
            enableMouse="true"
+           clampedToScreen="true"
            frameStrata="DIALOG">
 
         <Size>
-            <AbsDimension x="290" y="520"/>
+            <AbsDimension x="320" y="540"/>
         </Size>
 
         <Anchors>
@@ -47,15 +48,90 @@
         </Layers>
 
         <Frames>
-            <ScrollFrame name="TravelersRecallScrollFrame"
-                         enableMouseWheel="true">
+            <Frame name="TravelersRecallStatusFrame">
                 <Size>
-                    <AbsDimension x="220" y="370"/>
+                    <AbsDimension x="190" y="16"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOMLEFT">
+                        <Offset>
+                            <AbsDimension x="22" y="19"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString name="TravelersRecallStatusText"
+                                    inherits="GameFontDisableSmall"
+                                    justifyH="LEFT">
+                            <Anchors>
+                                <Anchor point="LEFT"/>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+            </Frame>
+
+            <EditBox name="TravelersRecallSearchBox"
+                     inherits="InputBoxTemplate"
+                     autoFocus="false">
+                <Size>
+                    <AbsDimension x="176" y="20"/>
                 </Size>
                 <Anchors>
                     <Anchor point="TOPLEFT">
                         <Offset>
-                            <AbsDimension x="20" y="-40"/>
+                            <AbsDimension x="30" y="-38"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnEscapePressed>
+                        this:ClearFocus();
+                    </OnEscapePressed>
+                    <OnEnterPressed>
+                        this:ClearFocus();
+                    </OnEnterPressed>
+                </Scripts>
+            </EditBox>
+
+            <Button name="TravelersRecallSortButton"
+                    inherits="UIPanelButtonTemplate">
+                <Size>
+                    <AbsDimension x="84" y="22"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPRIGHT">
+                        <Offset>
+                            <AbsDimension x="-20" y="-37"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </Button>
+
+            <CheckButton name="TravelersRecallReadyOnlyCheck"
+                         inherits="UICheckButtonTemplate">
+                <Size>
+                    <AbsDimension x="24" y="24"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="20" y="-60"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+            </CheckButton>
+
+            <ScrollFrame name="TravelersRecallScrollFrame"
+                         enableMouseWheel="true">
+                <Size>
+                    <AbsDimension x="252" y="400"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="22" y="-88"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
@@ -65,14 +141,14 @@
                     inherits="UIPanelScrollBarTemplate"
                     orientation="VERTICAL">
                 <Size>
-                    <AbsDimension x="16" y="370"/>
+                    <AbsDimension x="16" y="368"/>
                 </Size>
                 <Anchors>
                     <Anchor point="TOPLEFT"
                             relativeTo="TravelersRecallScrollFrame"
                             relativePoint="TOPRIGHT">
                         <Offset>
-                            <AbsDimension x="4" y="0"/>
+                            <AbsDimension x="6" y="-16"/>
                         </Offset>
                     </Anchor>
                 </Anchors>
@@ -84,26 +160,6 @@
                     <AbsValue val="1"/>
                 </ValueStep>
             </Slider>
-
-            <EditBox name="TravelersRecallSearchBox"
-                     inherits="InputBoxTemplate"
-                     autoFocus="false">
-                <Size>
-                    <AbsDimension x="220" y="20"/>
-                </Size>
-                <Anchors>
-                    <Anchor point="BOTTOM">
-                        <Offset>
-                            <AbsDimension x="0" y="48"/>
-                        </Offset>
-                    </Anchor>
-                </Anchors>
-                <Scripts>
-                    <OnEscapePressed>
-                        this:ClearFocus();
-                    </OnEscapePressed>
-                </Scripts>
-            </EditBox>
         </Frames>
 
         <Scripts>
@@ -115,6 +171,7 @@
                 title:SetPoint("TOP", 0, -2)
                 title:SetText("Traveler's Recall")
                 title:SetTextColor(1, 0.82, 0)
+                frame.legacyTitle = title
 
                 local closeButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
                 closeButton:SetWidth(90)
@@ -127,6 +184,7 @@
                         parent:Hide()
                     end
                 end)
+                frame.legacyCloseButton = closeButton
             </OnLoad>
 
             <OnDragStart>

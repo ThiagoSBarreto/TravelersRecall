@@ -2,18 +2,22 @@ TravelersRecall = TravelersRecall or {}
 TravelersRecall.UI = TravelersRecall.UI or {}
 TravelersRecall.searchText = TravelersRecall.searchText or ""
 
-local FRIEND_NAME = "Teleport to Friend"
-local OTHER_CONTINENT = 9
-local CONTINENT_NAMES = {
-    [1] = "Eastern Kingdoms",
-    [2] = "Kalimdor",
-    [3] = "Outland",
-    [4] = "Northrend",
-    [9] = "Other",
-}
-local ROW_HEIGHT = 26
-local HEADER_HEIGHT = 18
-local HEADER_GAP = 6
+local ROW_HEIGHT = 22
+local HEADER_HEIGHT = 20
+local GROUP_SPACING = 4
+local SCROLL_STEP = ROW_HEIGHT * 2
+
+local GROUP_FAVOURITES = "Favourites"
+local FAVOURITE_TEXTURE = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_1"
+local HIGHLIGHT_TEXTURE = "Interface\\QuestFrame\\UI-QuestTitleHighlight"
+
+local COLOR_NORMAL = { 1, 1, 1 }
+local COLOR_CAPITAL = { 1, 0.82, 0 }
+local COLOR_UNAVAILABLE = { 0.5, 0.5, 0.5 }
+local COLOR_COOLDOWN = { 1, 0.35, 0.35 }
+local COLOR_WARNING = { 1, 0.65, 0.2 }
+
+local needsRefresh = false
 
 local function SendEditBoxCommand(command)
     local editBox = ChatEdit_ChooseBoxForSend()
@@ -24,6 +28,17 @@ local function SendEditBoxCommand(command)
     editBox:SetText(command)
     ChatEdit_SendText(editBox)
     editBox:SetText("")
+end
+
+local function FormatCooldown(seconds)
+    seconds = math.ceil(seconds)
+    if seconds >= 3600 then
+        return string.format("%dh %02dm", math.floor(seconds / 3600), math.floor((seconds % 3600) / 60))
+    end
+    if seconds >= 60 then
+        return string.format("%dm %02ds", math.floor(seconds / 60), seconds % 60)
+    end
+    return string.format("%ds", seconds)
 end
 
 local function ToggleTravelersRecall()
@@ -38,6 +53,10 @@ local function ToggleTravelersRecall()
 
     TravelersRecallFrame:Show()
     SendEditBoxCommand(".tr list")
+
+    if TravelersRecall.Core and TravelersRecall.Core.ScheduleCooldownRequest then
+        TravelersRecall.Core.ScheduleCooldownRequest(0)
+    end
 end
 
 local function CreateMinimapButton()
@@ -78,9 +97,8 @@ local function CreateMinimapButton()
 
     minimapButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("Traveler's Recall 1.2.0")
-        GameTooltip:AddLine(" ")
-        -- GameTooltip:AddLine(" ", 1, 1, 1)
+        GameTooltip:AddLine("Traveler's Recall " .. (GetAddOnMetadata("TravelersRecall", "Version") or ""))
+        GameTooltip:AddLine("Click to open, drag to move.", 0.7, 0.7, 0.7)
         GameTooltip:Show()
     end)
 
@@ -91,286 +109,469 @@ local function CreateMinimapButton()
     return minimapButton
 end
 
-local FAVORITES_GROUP = 1
-local CONTINENT_GROUP_BASE = 10
-
-local RefreshLocations
-
-local function GetGroupTitle(group)
-    if group == FAVORITES_GROUP then
-        return "Favourites"
-    end
-    local continent = group - CONTINENT_GROUP_BASE
-    return CONTINENT_NAMES[continent] or CONTINENT_NAMES[OTHER_CONTINENT]
+local function GetDB()
+    return TravelersRecall.Core.GetDB()
 end
 
-local function GetOrCreateHeader(content, index)
-    local headers = TravelersRecall.UI.headers
-    local header = headers[index]
-    if header then
-        return header
-    end
-
-    header = CreateFrame("Button", nil, content)
-    header:SetWidth(214)
-    header:SetHeight(HEADER_HEIGHT)
-    header:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-
-    header.text = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    header.text:SetPoint("LEFT", header, "LEFT", 2, 0)
-    header.text:SetJustifyH("LEFT")
-
-    header:SetScript("OnClick", function(self)
-        TravelersRecall.Core.ToggleCollapsed(self.group)
-        RefreshLocations()
-    end)
-
-    headers[index] = header
-    return header
-end
-
-local function GetOrCreateButton(content, index)
-    local buttons = TravelersRecall.UI.buttons
-    local button = buttons[index]
-    if button then
-        return button
-    end
-
-    button = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
-    button:SetWidth(190)
-    button:SetHeight(24)
-
-    button.icon = button:CreateTexture(nil, "ARTWORK")
-    button.icon:SetWidth(16)
-    button.icon:SetHeight(16)
-    button.icon:SetPoint("RIGHT", button, "LEFT", -4, 0)
-
-    -- Star marking a favourite.
-    button.fav = button:CreateTexture(nil, "OVERLAY")
-    button.fav:SetWidth(12)
-    button.fav:SetHeight(12)
-    button.fav:SetPoint("LEFT", button, "LEFT", 6, 0)
-    button.fav:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_1")
-
-    -- Remaining cooldown, right-aligned inside the button.
-    button.cd = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    button.cd:SetPoint("RIGHT", button, "RIGHT", -8, 0)
-    button.cd:SetTextColor(1, 0.35, 0.35)
-
-    buttons[index] = button
-    return button
-end
-
-local function UpdateButtonCooldown(button)
-    local remaining = TravelersRecall.Core.GetCooldownRemaining(button.locationId)
-    button.onCooldown = remaining > 0
-
-    if remaining > 0 then
-        button:SetText("|cff8a8a8a" .. button.locationName .. "|r")
-        button.cd:SetText(TravelersRecall.Core.FormatCooldown(remaining))
-        button.cd:Show()
-    else
-        button:SetText(button.locationName)
-        button.cd:Hide()
-    end
-end
-
-local function ShowButtonTooltip(button)
+-- Name colour, status text and icon shading for one location row.
+local function ApplyRowState(row)
+    local location = row.location
     local core = TravelersRecall.Core
-    GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-    GameTooltip:AddLine(button.locationName)
-    if button.zone ~= "" then
-        GameTooltip:AddLine(button.zone, 0.8, 0.8, 0.8)
-    end
+    local available, reason, warning = core.GetAvailability(location.id, location.data)
+    local remaining = core.GetCooldownRemaining(location.id)
 
-    local remaining = core.GetCooldownRemaining(button.locationId)
     if remaining > 0 then
-        GameTooltip:AddLine("Cooldown: " .. core.FormatCooldown(remaining), 1, 0.35, 0.35)
+        row.status:SetText(FormatCooldown(remaining))
+        row.status:SetTextColor(COLOR_COOLDOWN[1], COLOR_COOLDOWN[2], COLOR_COOLDOWN[3])
+    elseif reason then
+        local color = warning and COLOR_WARNING or COLOR_UNAVAILABLE
+        row.status:SetText(reason)
+        row.status:SetTextColor(color[1], color[2], color[3])
+    else
+        row.status:SetText("")
     end
 
-    if core.IsFavorite(button.locationId) then
-        GameTooltip:AddLine("Shift-click to remove from favourites", 0.5, 0.5, 0.5)
-    else
-        GameTooltip:AddLine("Shift-click to add to favourites", 0.5, 0.5, 0.5)
+    local color = COLOR_NORMAL
+    if not available then
+        color = COLOR_UNAVAILABLE
+    elseif location.info.capital then
+        color = COLOR_CAPITAL
     end
+    row.text:SetTextColor(color[1], color[2], color[3])
+
+    row.icon:SetDesaturated(not available)
+    row.icon:SetAlpha(available and 1 or 0.6)
+
+    local changed = row.available ~= nil and row.available ~= available
+    row.available = available
+    return changed
+end
+
+local function ShowRowTooltip(row)
+    local location = row.location
+    local core = TravelersRecall.Core
+    local isFriend = core.IsFriendLocation(location.data)
+    local available, reason = core.GetAvailability(location.id, location.data)
+    local remaining = core.GetCooldownRemaining(location.id)
+
+    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+
+    local color = location.info.capital and COLOR_CAPITAL or COLOR_NORMAL
+    GameTooltip:AddLine(location.data.name, color[1], color[2], color[3])
+
+    if isFriend then
+        GameTooltip:AddLine("Teleports you to your targeted party member.", 0.7, 0.7, 0.7, true)
+    else
+        local zone = location.info.zone
+        if zone and location.info.capital then
+            GameTooltip:AddLine(zone .. " - Capital City", 0.7, 0.7, 0.7)
+        elseif zone and string.lower(string.gsub(zone, "'", "")) ~= string.lower(string.gsub(location.data.name, "'", "")) then
+            GameTooltip:AddLine(zone, 0.7, 0.7, 0.7)
+        end
+        GameTooltip:AddLine(location.info.region, 0.7, 0.7, 0.7)
+    end
+
+    if remaining > 0 then
+        GameTooltip:AddLine("Cooldown: " .. FormatCooldown(remaining), COLOR_COOLDOWN[1], COLOR_COOLDOWN[2], COLOR_COOLDOWN[3])
+    elseif reason then
+        local reasonColor = available and COLOR_WARNING or COLOR_UNAVAILABLE
+        GameTooltip:AddLine(reason, reasonColor[1], reasonColor[2], reasonColor[3])
+    end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Click to teleport.", 0.5, 0.5, 0.5)
+    if not isFriend then
+        if GetDB().favourites[location.id] then
+            GameTooltip:AddLine("Right-click to remove from favourites.", 0.5, 0.5, 0.5)
+        else
+            GameTooltip:AddLine("Right-click to add to favourites.", 0.5, 0.5, 0.5)
+        end
+    end
+
     GameTooltip:Show()
 end
 
-RefreshLocations = function()
+local RefreshNow
+
+local function CreateRow(content)
+    local row = CreateFrame("Button", nil, content)
+    row:SetHeight(ROW_HEIGHT)
+    row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    row:SetHighlightTexture(HIGHLIGHT_TEXTURE, "ADD")
+
+    row.icon = row:CreateTexture(nil, "ARTWORK")
+    row.icon:SetWidth(18)
+    row.icon:SetHeight(18)
+    row.icon:SetPoint("LEFT", row, "LEFT", 6, 0)
+
+    row.favourite = row:CreateTexture(nil, "OVERLAY")
+    row.favourite:SetTexture(FAVOURITE_TEXTURE)
+    row.favourite:SetWidth(11)
+    row.favourite:SetHeight(11)
+    row.favourite:SetPoint("CENTER", row.icon, "TOPLEFT", 1, -1)
+
+    row.status = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.status:SetPoint("RIGHT", row, "RIGHT", -6, 0)
+    row.status:SetJustifyH("RIGHT")
+
+    row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    row.text:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
+    row.text:SetPoint("RIGHT", row.status, "LEFT", -4, 0)
+    row.text:SetJustifyH("LEFT")
+
+    row:SetScript("OnClick", function(self, button)
+        local location = self.location
+        if not location then
+            return
+        end
+
+        if button == "RightButton" then
+            if TravelersRecall.Core.IsFriendLocation(location.data) then
+                return
+            end
+
+            local favourites = GetDB().favourites
+            if favourites[location.id] then
+                favourites[location.id] = nil
+            else
+                favourites[location.id] = true
+            end
+            GameTooltip:Hide()
+            RefreshNow()
+            return
+        end
+
+        SendEditBoxCommand(".tr teleport " .. location.id)
+    end)
+
+    row:SetScript("OnEnter", ShowRowTooltip)
+    row:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    return row
+end
+
+local function CreateHeader(content)
+    local header = CreateFrame("Button", nil, content)
+    header:SetHeight(HEADER_HEIGHT)
+    header:SetHighlightTexture(HIGHLIGHT_TEXTURE, "ADD")
+
+    header.background = header:CreateTexture(nil, "BACKGROUND")
+    header.background:SetAllPoints(header)
+    header.background:SetTexture(1, 1, 1, 0.06)
+
+    header.toggle = header:CreateTexture(nil, "ARTWORK")
+    header.toggle:SetWidth(14)
+    header.toggle:SetHeight(14)
+    header.toggle:SetPoint("LEFT", header, "LEFT", 4, 0)
+
+    header.text = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    header.text:SetPoint("LEFT", header.toggle, "RIGHT", 4, 0)
+
+    header.count = header:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    header.count:SetPoint("LEFT", header.text, "RIGHT", 6, 0)
+
+    header:SetScript("OnClick", function(self)
+        local collapsed = GetDB().collapsed
+        if collapsed[self.group] then
+            collapsed[self.group] = nil
+        else
+            collapsed[self.group] = true
+        end
+        RefreshNow()
+    end)
+
+    return header
+end
+
+local function SortByName(left, right)
+    return string.lower(left.data.name) < string.lower(right.data.name)
+end
+
+-- Builds the ordered list of headers and rows for the current search, filter and sort mode.
+local function BuildEntries()
+    local core = TravelersRecall.Core
+    local data = TravelersRecall.Data
+    local db = GetDB()
+
+    local friendLocations = {}
+    local favouriteLocations = {}
+    local otherLocations = {}
+    local groups = {}
+    local total, onCooldown = 0, 0
+
+    for id, locationData in pairs(TravelersRecall.unlocked) do
+        local info = data.GetLocationInfo(locationData.name)
+        total = total + 1
+        if core.GetCooldownRemaining(id) > 0 then
+            onCooldown = onCooldown + 1
+        end
+
+        local searchRegion = info.region
+        if info.capital then
+            searchRegion = data.REGION_CAPITALS .. " " .. info.region
+        end
+        if info.zone then
+            searchRegion = info.zone .. " " .. searchRegion
+        end
+
+        if core.MatchesSearch(locationData.name, searchRegion)
+            and (not db.readyOnly or core.GetAvailability(id, locationData)) then
+            local location = { id = id, data = locationData, info = info }
+
+            if core.IsFriendLocation(locationData) then
+                table.insert(friendLocations, location)
+            elseif db.favourites[id] then
+                table.insert(favouriteLocations, location)
+            else
+                local group = info.capital and data.REGION_CAPITALS or info.region
+                if db.sortMode == "zone" then
+                    group = info.zone or data.REGION_OTHER
+                end
+                groups[group] = groups[group] or {}
+                table.insert(groups[group], location)
+                table.insert(otherLocations, location)
+            end
+        end
+    end
+
+    local entries = {}
+    local searching = (TravelersRecall.searchText or "") ~= ""
+
+    for _, location in ipairs(friendLocations) do
+        table.insert(entries, { location = location })
+    end
+
+    table.sort(favouriteLocations, SortByName)
+
+    if db.sortMode == "name" then
+        for _, location in ipairs(favouriteLocations) do
+            table.insert(entries, { location = location })
+        end
+
+        table.sort(otherLocations, SortByName)
+        for _, location in ipairs(otherLocations) do
+            table.insert(entries, { location = location })
+        end
+
+        return entries, total, onCooldown
+    end
+
+    local function AddGroup(group, locations)
+        if not locations or #locations == 0 then
+            return
+        end
+
+        local collapsed = db.collapsed[group] and not searching
+        table.insert(entries, { group = group, count = #locations, collapsed = collapsed })
+
+        if not collapsed then
+            table.sort(locations, SortByName)
+            for _, location in ipairs(locations) do
+                table.insert(entries, { location = location })
+            end
+        end
+    end
+
+    AddGroup(GROUP_FAVOURITES, favouriteLocations)
+
+    if db.sortMode == "zone" then
+        local zones = {}
+        for group in pairs(groups) do
+            if group ~= data.REGION_OTHER then
+                table.insert(zones, group)
+            end
+        end
+        table.sort(zones)
+        for _, group in ipairs(zones) do
+            AddGroup(group, groups[group])
+        end
+        AddGroup(data.REGION_OTHER, groups[data.REGION_OTHER])
+        return entries, total, onCooldown
+    end
+
+    for _, group in ipairs(data.REGION_ORDER) do
+        AddGroup(group, groups[group])
+    end
+
+    return entries, total, onCooldown
+end
+
+local function UpdateStatusText(total, onCooldown)
+    if not TravelersRecallStatusText then
+        return
+    end
+
+    if total == 0 then
+        TravelersRecallStatusText:SetText("No locations unlocked yet")
+        return
+    end
+
+    local text = total .. (total == 1 and " location" or " locations")
+    if onCooldown > 0 then
+        text = text .. ", " .. onCooldown .. " on cooldown"
+    end
+    TravelersRecallStatusText:SetText(text)
+end
+
+RefreshNow = function()
+    needsRefresh = false
+
     local content = TravelersRecallScrollFrame and TravelersRecallScrollFrame:GetScrollChild()
     if not content then
         return
     end
 
-    local core = TravelersRecall.Core
-    TravelersRecall.UI.buttons = TravelersRecall.UI.buttons or {}
-    TravelersRecall.UI.headers = TravelersRecall.UI.headers or {}
+    local rows = TravelersRecall.UI.rows or {}
+    local headers = TravelersRecall.UI.headers or {}
+    TravelersRecall.UI.rows = rows
+    TravelersRecall.UI.headers = headers
 
-    for _, button in ipairs(TravelersRecall.UI.buttons) do
-        button:Hide()
-        button.locationId = nil
+    for _, row in ipairs(rows) do
+        row:Hide()
+        row.location = nil
     end
-
-    for _, header in ipairs(TravelersRecall.UI.headers) do
+    for _, header in ipairs(headers) do
         header:Hide()
     end
 
-    local allMeta = TravelersRecall.meta or {}
-    local locations = {}
-    local groupCounts = {}
-    for id, data in pairs(TravelersRecall.unlocked) do
-        local meta = allMeta[id]
-        local zone = meta and meta.zone or nil
-        if core.MatchesSearch(data and data.name, zone) then
-            local group
-            if data.name == FRIEND_NAME then
-                group = 0
-            elseif core.IsFavorite(id) then
-                group = FAVORITES_GROUP
-            else
-                group = CONTINENT_GROUP_BASE + ((meta and meta.continent) or OTHER_CONTINENT)
-            end
+    local width = TravelersRecallScrollFrame:GetWidth()
+    content:SetWidth(width)
 
-            groupCounts[group] = (groupCounts[group] or 0) + 1
-            table.insert(locations, {
-                id = id,
-                data = data,
-                zone = zone or "",
-                group = group,
-                -- Favourites are sorted by name only.
-                zoneKey = group == FAVORITES_GROUP and "" or string.lower(zone or ""),
-                sortName = string.lower(data.name or ""),
-            })
-        end
-    end
-
-    -- Teleport to Friend, favourites, then continent, zone and name.
-    -- Every key is compared in full, so the comparator is a strict ordering.
-    table.sort(locations, function(left, right)
-        if left.group ~= right.group then
-            return left.group < right.group
-        end
-        if left.zoneKey ~= right.zoneKey then
-            return left.zoneKey < right.zoneKey
-        end
-        if left.sortName ~= right.sortName then
-            return left.sortName < right.sortName
-        end
-        return left.id < right.id
-    end)
-
-    -- Continent headers only make sense when the server sends grouping info,
-    -- but favourites always get one.
-    local hasMeta = next(allMeta) ~= nil
-    local searching = (TravelersRecall.searchText or "") ~= ""
-
+    local entries, total, onCooldown = BuildEntries()
+    local favourites = GetDB().favourites
+    local rowIndex, headerIndex = 0, 0
     local offset = 0
-    local buttonIndex = 0
-    local headerIndex = 0
-    local currentGroup = nil
-    local collapsed = false
 
-    for _, location in ipairs(locations) do
-        if location.group ~= currentGroup then
-            currentGroup = location.group
-            collapsed = false
-
-            local wantsHeader = currentGroup == FAVORITES_GROUP
-                or (currentGroup >= CONTINENT_GROUP_BASE and hasMeta)
-
-            if wantsHeader then
-                -- While searching, show every match regardless of collapsed groups.
-                collapsed = not searching and core.IsCollapsed(currentGroup)
-
-                headerIndex = headerIndex + 1
-                local header = GetOrCreateHeader(content, headerIndex)
-
-                if offset > 0 then
-                    offset = offset + HEADER_GAP
-                end
-
-                header.group = currentGroup
-                header:ClearAllPoints()
-                header:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -offset)
-                header.text:SetText(string.format("%s %s |cff808080(%d)|r",
-                    collapsed and "+" or "-",
-                    GetGroupTitle(currentGroup),
-                    groupCounts[currentGroup] or 0))
-                header:Show()
-                offset = offset + HEADER_HEIGHT
+    for index, entry in ipairs(entries) do
+        if entry.group then
+            if index > 1 then
+                offset = offset + GROUP_SPACING
             end
-        end
 
-        if not collapsed then
-            local id = location.id
-            local data = location.data
+            headerIndex = headerIndex + 1
+            local header = headers[headerIndex]
+            if not header then
+                header = CreateHeader(content)
+                headers[headerIndex] = header
+            end
 
-            buttonIndex = buttonIndex + 1
-            local button = GetOrCreateButton(content, buttonIndex)
-
-            button.locationId = id
-            button.locationName = data.name
-            button.zone = location.zone
-
-            button:ClearAllPoints()
-            button:SetPoint("TOPLEFT", content, "TOPLEFT", 30, -offset)
-            button.icon:SetTexture(data.icon)
-
-            if location.group == FAVORITES_GROUP then
-                button.fav:Show()
+            header.group = entry.group
+            header.text:SetText(entry.group)
+            header.count:SetText("(" .. entry.count .. ")")
+            if entry.collapsed then
+                header.toggle:SetTexture("Interface\\Buttons\\UI-PlusButton-Up")
             else
-                button.fav:Hide()
+                header.toggle:SetTexture("Interface\\Buttons\\UI-MinusButton-Up")
             end
 
-            UpdateButtonCooldown(button)
+            header:ClearAllPoints()
+            header:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -offset)
+            header:SetWidth(width)
+            header:Show()
+            offset = offset + HEADER_HEIGHT
+        else
+            rowIndex = rowIndex + 1
+            local row = rows[rowIndex]
+            if not row then
+                row = CreateRow(content)
+                rows[rowIndex] = row
+            end
 
-            button:SetScript("OnClick", function(self)
-                if IsShiftKeyDown() and data.name ~= FRIEND_NAME then
-                    core.ToggleFavorite(id)
-                    RefreshLocations()
-                    if GameTooltip:IsOwned(self) then
-                        ShowButtonTooltip(self)
-                    end
-                    return
-                end
-                SendEditBoxCommand(".tr teleport " .. id)
-            end)
-            button:SetScript("OnEnter", ShowButtonTooltip)
-            button:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-            end)
+            local location = entry.location
+            row.location = location
+            row.available = nil
+            row.text:SetText(location.data.name)
+            row.icon:SetTexture(location.data.icon)
 
-            button:Show()
+            if favourites[location.id] then
+                row.favourite:Show()
+            else
+                row.favourite:Hide()
+            end
+
+            ApplyRowState(row)
+
+            row:ClearAllPoints()
+            row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -offset)
+            row:SetWidth(width)
+            row:Show()
             offset = offset + ROW_HEIGHT
         end
     end
 
-    content:SetHeight(math.max(offset, 1))
+    content:SetHeight(math.max(1, offset))
 
-    local maxScroll = math.max(0, offset - 370)
+    local maxScroll = math.max(0, offset - TravelersRecallScrollFrame:GetHeight())
     TravelersRecallScrollBar:SetMinMaxValues(0, maxScroll)
+    if TravelersRecallScrollBar:GetValue() > maxScroll then
+        TravelersRecallScrollBar:SetValue(maxScroll)
+    end
+    if maxScroll > 0 then
+        TravelersRecallScrollBar:Show()
+    else
+        TravelersRecallScrollBar:Hide()
+        TravelersRecallScrollFrame:SetVerticalScroll(0)
+    end
+
+    UpdateStatusText(total, onCooldown)
 end
 
--- Count cooldowns down once per second while the window is open.
-local function SetupCooldownTicker()
-    if not TravelersRecallFrame then
+-- Batches the many TR_LIST messages into one rebuild on the next frame.
+local function RefreshLocations()
+    needsRefresh = true
+end
+
+-- Cheap update of the visible rows (cooldown timers, party state) without rebuilding the list.
+local function UpdateLocationStates()
+    if not TravelersRecallFrame or not TravelersRecallFrame:IsShown() then
         return
     end
 
-    local elapsedSinceTick = 0
-    TravelersRecallFrame:SetScript("OnUpdate", function(_, elapsed)
-        elapsedSinceTick = elapsedSinceTick + elapsed
-        if elapsedSinceTick < 1 then
-            return
-        end
-        elapsedSinceTick = 0
-
-        for _, button in ipairs(TravelersRecall.UI.buttons or {}) do
-            if button:IsShown() and button.locationId and button.onCooldown then
-                UpdateButtonCooldown(button)
+    local changed = false
+    for _, row in ipairs(TravelersRecall.UI.rows or {}) do
+        if row:IsShown() and row.location then
+            if ApplyRowState(row) then
+                changed = true
             end
         end
-    end)
+    end
+
+    if changed and GetDB().readyOnly then
+        needsRefresh = true
+        return
+    end
+
+    local total, onCooldown = 0, 0
+    for id in pairs(TravelersRecall.unlocked) do
+        total = total + 1
+        if TravelersRecall.Core.GetCooldownRemaining(id) > 0 then
+            onCooldown = onCooldown + 1
+        end
+    end
+    UpdateStatusText(total, onCooldown)
+
+    if GameTooltip:IsShown() then
+        local owner = GameTooltip:GetOwner()
+        if owner and owner.location and owner:IsShown() then
+            ShowRowTooltip(owner)
+        end
+    end
+end
+
+local function UpdateSortButton()
+    if not TravelersRecallSortButton then
+        return
+    end
+
+    if GetDB().sortMode == "name" then
+        TravelersRecallSortButton:SetText("A - Z")
+    elseif GetDB().sortMode == "zone" then
+        TravelersRecallSortButton:SetText("By Zone")
+    else
+        TravelersRecallSortButton:SetText("By Region")
+    end
 end
 
 local function SetupSearchBox()
@@ -378,11 +579,81 @@ local function SetupSearchBox()
         return
     end
 
+    local placeholder = TravelersRecallSearchBox:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    placeholder:SetPoint("LEFT", TravelersRecallSearchBox, "LEFT", 1, 0)
+    placeholder:SetText("Search name or zone")
+    TravelersRecallSearchBox.placeholder = placeholder
+
+    local function UpdatePlaceholder(self)
+        if self:GetText() == "" and not self.hasFocus then
+            self.placeholder:Show()
+        else
+            self.placeholder:Hide()
+        end
+    end
+
     TravelersRecallSearchBox:SetText("")
     TravelersRecallSearchBox:SetScript("OnTextChanged", function(self)
         TravelersRecall.searchText = string.lower(self:GetText() or "")
-        RefreshLocations()
+        UpdatePlaceholder(self)
+        TravelersRecallScrollBar:SetValue(0)
+        RefreshNow()
     end)
+    TravelersRecallSearchBox:HookScript("OnEditFocusGained", function(self)
+        self.hasFocus = true
+        UpdatePlaceholder(self)
+    end)
+    TravelersRecallSearchBox:HookScript("OnEditFocusLost", function(self)
+        self.hasFocus = false
+        UpdatePlaceholder(self)
+    end)
+end
+
+local function SetupFilters()
+    if TravelersRecallSortButton then
+        TravelersRecallSortButton:SetScript("OnClick", function()
+            local db = GetDB()
+            if db.sortMode == "region" then
+                db.sortMode = "zone"
+            elseif db.sortMode == "zone" then
+                db.sortMode = "name"
+            else
+                db.sortMode = "region"
+            end
+            UpdateSortButton()
+            TravelersRecallScrollBar:SetValue(0)
+            RefreshNow()
+        end)
+        TravelersRecallSortButton:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine("Sort order")
+            GameTooltip:AddLine("Switch between grouping by region, grouping by zone and a plain A - Z list.", 0.7, 0.7, 0.7, true)
+            GameTooltip:Show()
+        end)
+        TravelersRecallSortButton:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+    end
+
+    if TravelersRecallReadyOnlyCheck then
+        local label = _G[TravelersRecallReadyOnlyCheck:GetName() .. "Text"]
+        if label then
+            label:SetText("Hide unavailable")
+        end
+        TravelersRecallReadyOnlyCheck:SetScript("OnClick", function(self)
+            GetDB().readyOnly = self:GetChecked() and true or false
+            RefreshNow()
+        end)
+    end
+end
+
+-- Runs once the saved variables are loaded.
+local function ApplySettings()
+    if TravelersRecallReadyOnlyCheck then
+        TravelersRecallReadyOnlyCheck:SetChecked(GetDB().readyOnly)
+    end
+    UpdateSortButton()
+    RefreshLocations()
 end
 
 local function SetupScrollFrame()
@@ -396,26 +667,53 @@ local function SetupScrollFrame()
         local min, max = TravelersRecallScrollBar:GetMinMaxValues()
 
         if delta > 0 then
-            TravelersRecallScrollBar:SetValue(math.max(current - 20, min))
+            TravelersRecallScrollBar:SetValue(math.max(current - SCROLL_STEP, min))
         else
-            TravelersRecallScrollBar:SetValue(math.min(current + 20, max))
+            TravelersRecallScrollBar:SetValue(math.min(current + SCROLL_STEP, max))
         end
     end)
 
     local content = CreateFrame("Frame", "TravelersRecallContentFrame", TravelersRecallScrollFrame)
-    content:SetWidth(200)
+    content:SetWidth(TravelersRecallScrollFrame:GetWidth())
     content:SetHeight(1)
     TravelersRecallScrollFrame:SetScrollChild(content)
+end
+
+local function SetupFrame()
+    tinsert(UISpecialFrames, "TravelersRecallFrame")
+
+    TravelersRecallFrame:SetScript("OnShow", function()
+        RefreshNow()
+    end)
+
+    TravelersRecallFrame:SetScript("OnUpdate", function(self, elapsed)
+        if needsRefresh then
+            RefreshNow()
+        end
+
+        self.cooldownTimer = (self.cooldownTimer or 0) + elapsed
+        if self.cooldownTimer >= 1 then
+            self.cooldownTimer = 0
+            if next(TravelersRecall.cooldowns) ~= nil then
+                UpdateLocationStates()
+            end
+        end
+    end)
 end
 
 TravelersRecall.UI.SendEditBoxCommand = SendEditBoxCommand
 TravelersRecall.UI.Toggle = ToggleTravelersRecall
 TravelersRecall.UI.RefreshLocations = RefreshLocations
+TravelersRecall.UI.RefreshNow = RefreshNow
+TravelersRecall.UI.UpdateLocationStates = UpdateLocationStates
+TravelersRecall.UI.ApplySettings = ApplySettings
 TravelersRecall.UI.CreateMinimapButton = CreateMinimapButton
 TravelersRecall.UI.SetupSearchBox = SetupSearchBox
 TravelersRecall.UI.SetupScrollFrame = SetupScrollFrame
 
-CreateMinimapButton()
+TravelersRecall.UI.minimapButton = CreateMinimapButton()
 SetupScrollFrame()
 SetupSearchBox()
-SetupCooldownTicker()
+SetupFilters()
+SetupFrame()
+UpdateSortButton()
