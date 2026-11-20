@@ -9,6 +9,8 @@
 
 **Progressive fast-travel system for AzerothCore.**
 
+## Big thanks to [EvilTactician](https://github.com/EvilTactician) and [Tntdruid](https://github.com/Tntdruid) for the love put into this.
+
 </div>
 
 ---
