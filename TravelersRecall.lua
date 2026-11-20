@@ -25,6 +25,12 @@ ChatFrame_AddMessageEventFilter(
         if string.find(msg, "TR_") then
             return true
         end
+
+        -- Hide the replies to the addon's own cooldown lookup, not ones the player asked for.
+        if TravelersRecall.Core and TravelersRecall.Core.ShouldSuppressCooldownMessage
+            and TravelersRecall.Core.ShouldSuppressCooldownMessage(msg) then
+            return true
+        end
     end
 )
 
